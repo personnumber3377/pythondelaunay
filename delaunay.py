@@ -61,5 +61,66 @@ class Delaunay:
 
 		distance_squared = (c_0 - p_0)**2 + (c_1 - p_1)**2
 		print("distance_squared == "+str(distance_squared))
-		return 
+		assert isinstance(p_0, float)
+		assert isinstance(p_1, float)
+		return ((p_0, p_1), distance_squared) # Return a tuple containing the circle center and the distance squared.
+	# Fast algorithm to check if point p is inside the circumcircle enscribing triangle tri. (This assumes that the self.circles array has been initialized.)
+	def inCircleFast(self, tri, p) -> bool:
+		center, radius = self.circles[tri]
 
+		return np.sum(np.square(center - p)) <= radius # Check such that distance is less than or equal.
+
+	# Now this doesn't assume that the self.circles array has been initialized.
+	def inCircleRobust(self, tri, p) -> bool:
+		'''
+		m1 = np.asarray([self.coords[v] - p for v in tri])
+        m2 = np.sum(np.square(m1), axis=1).reshape((3, 1))
+        m = np.hstack((m1, m2))    # The 3x3 matrix to check
+        return np.linalg.det(m) <= 0
+		'''
+		m1 = np.asarray([self.coords[v] - p for v in tri])
+		m2 = np.sum(np.square(m1), axis=1).respahe((3,1)) # Reshape this stuff
+		# Ok, so m1 is the two leftmost columns and m2 is the square difference shit.
+		m = np.hstack((m1,m2))
+		return np.linalg.det(m) <= 0 # if the determinant is negative or zero, then the point p is inside the circumcircle for tri.
+	
+	def addPoint(self, p): # This method adds a point in the delaunay triangulation graph.
+		p = np.asarray(p)
+		idx = len(self.coords)
+		self.coords.append(p) # Add point to the point list.
+
+		bad_triangles = [] # badTriangles := empty set
+
+		for tri in self.triangles: # // first find all the triangles that are no longer valid due to the insertion
+			if self.inCircleFast(tri, p): # If the triangle is in the triangle, then that triangle is no longer valid.
+				bad_triangles.append(tri)
+		
+		polygon = [] # These are the points of the new polygon.
+
+		#for tri in bad_triangles: #  // find the boundary of the polygonal hole
+		#	for edge in tri:
+		#		# if edge is not shared by any other triangles in badTriangles
+		#		
+
+		tri = bad_triangles[0]
+		cur_edge = 0
+		while True:
+			# Check if edge of triangle T is on the polygonal boundary.
+			
+			tri_op = self.triangles[tri][edge]
+			assert isinstance(tri_op, int) # 
+			if tri_op not in bad_triangles:
+				# Insert the current edge and external triangle into the boundary list.
+				polygon.append((tri[(cur_edge+1) % 3], tri[(cur_edge-1) % 3], tri_op))
+
+				# Move to next CCW edge in this triangle.
+				cur_edge = (cur_edge + 1) % 3
+
+				# Check if boundary polygon is closed as a loop. If yes, then break
+				if polygon[0][0] == polygon[-1][1]
+					break
+			else: # tri_op is in bad_triangles.
+				# Just move to the next CCW edge in the opposite triangle.
+				cur_edge = (self.triangles[tri_op].index(tri) + 1) % 3
+				tri = tri_op # Jump to the next triangle.
+		
