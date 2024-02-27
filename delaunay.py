@@ -107,8 +107,9 @@ class Delaunay:
 		while True:
 			# Check if edge of triangle T is on the polygonal boundary.
 			
-			tri_op = self.triangles[tri][edge]
-			assert isinstance(tri_op, int) # 
+			tri_op = self.triangles[tri][cur_edge]
+			#print("tri_op == "+str(tri_op))
+			#assert isinstance(tri_op, int) # 
 			if tri_op not in bad_triangles:
 				# Insert the current edge and external triangle into the boundary list.
 				polygon.append((tri[(cur_edge+1) % 3], tri[(cur_edge-1) % 3], tri_op))
@@ -117,10 +118,80 @@ class Delaunay:
 				cur_edge = (cur_edge + 1) % 3
 
 				# Check if boundary polygon is closed as a loop. If yes, then break
-				if polygon[0][0] == polygon[-1][1]
+				if polygon[0][0] == polygon[-1][1]:
 					break
 			else: # tri_op is in bad_triangles.
 				# Just move to the next CCW edge in the opposite triangle.
 				cur_edge = (self.triangles[tri_op].index(tri) + 1) % 3
 				tri = tri_op # Jump to the next triangle.
 		
+		# Remove the "bad" triangles
+		for t in bad_triangles:
+			del self.triangles[t]
+			del self.circles[t]
+		
+		# Retriangle the hole left by bad triangles.
+		new_triangles = []
+		for (e0, e1, tri_op) in polygon: # e0 is the edge and then the tri_op is the thing.
+			# Create a new triangle using point p and edge extremes.
+			T = (idx, e0, e1)
+
+			# Store the circumcenter and circumradius of the triangle.
+			self.circles[T] = self.circumcenter(T)
+			# Set opposite triangle of the edge as neigbhour of T
+			self.triangles[T] = [tri_op, None, None]
+
+			# Try to set T as neighbour of the opposite triangle
+			if tri_op:
+				# Search the neighbour of the opposite triangle.
+				for i, neigh in enumerate(self.triangles[tri_op]):
+					if neigh:
+						if e1 in neigh and e0 in neigh:
+							# Change link to use our new triangle.
+							self.triangles[tri_op][i] = T
+			
+			# Add triangle to a temporan list
+			new_triangles.append(T)
+		
+		# Link the new triangles each another.
+		N = len(new_triangles)
+		for i, T in enumerate(new_triangles):
+			self.triangles[T][1] = new_triangles[(i+1) % N] # Next
+			self.triangles[T][2] = new_triangles[(i-1) % N] # previous.
+
+	def exportTriangles(self): # Returns the triangles not including the bounding box stuff.
+		return [(a-4, b-4, c-4) for (a,b,c) in self.triangles if a > 3 and b > 3 and c > 3]
+	
+	def exportVoronoi(self): # This returns the vertexes and the edges of the corresponding voronoi shit.
+		useVertex = {i: [] for i in range(len(self.coords))} # This is the dictionary with the triangle index as a key and the value as the corresponding edges of that triangle. Construct this such that the key is always the last edge in the list.
+		vor_coords = []
+		index = {}
+		# Build a list of coordinates and one index per triangle/region
+		for tidx, (a,b,c) in enumerate(sorted(self.triangles)):
+			vor_coords.append(self.circles[(a,b,c)][0]) # Get the first index, because the first index is the center point.
+			# Insert triangle, rotating it so the key is the last vertex in the list.
+			useVertex[a] += [(b,c,a)]
+			useVertex[b] += [(c,a,b)]
+			useVertex[c] += [(a,b,c)]
+			# Set tidx as the index to use with this triangle.
+			index[(a,b,c)] = tidx
+			index[(b,c,a)] = tidx
+			index[(c,a,b)] = tidx
+
+		# init regions per coordinate dictionary.
+		regions = {}
+		# Sort each region in a coherent order, and substitute each triangle by its index.
+		for i in range(4, len(self.coords)): # Skip over the first triangles which is the bounding box stuff.
+			
+			# The current vertex
+			v = useVertex[i][0][0]
+			r = []
+			for _ in range(len(useVertex[i])): # Go over each 
+				# Search the triangle from the very first vertex.
+				t = [t for t in useVertex[i] if t[0] == v][0] # This get's the triangle vertex
+				r.append(index[t])
+				v = t[1] # Go to the next vertex
+			regions[i-4] = r # Store the region into the set.
+		return vor_coords, regions # Regions is the dict where the key is the index of the center point and the value is just the list of the associated 
+
+
