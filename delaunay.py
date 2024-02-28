@@ -1,5 +1,6 @@
 
 import numpy as np
+import math
 
 class Delaunay:
 	def __init__(self, center=(0,0), radius=1000): # Constructor
@@ -54,6 +55,28 @@ class Delaunay:
 
 		D = (a_0 - c_0) * (b_1 - c_1) - (b_0 - c_0) * (a_1 - c_1)
 		print("Value of D: "+str(D))
+		
+		# This bounds check is ripped straight from here: https://github.com/d3/d3-delaunay/blob/main/src/voronoi.js
+		'''
+		if (Math.abs(ab) < 1e-9) {
+			// For a degenerate triangle, the circumcenter is at the infinity, in a
+			// direction orthogonal to the halfedge and away from the “center” of
+			// the diagram <bx, by>, defined as the hull’s barycenter.
+			if (bx === undefined) {
+			bx = by = 0;
+			for (const i of hull) bx += points[i * 2], by += points[i * 2 + 1];
+			bx /= hull.length, by /= hull.length;
+			}
+			const a = 1e9 * Math.sign((bx - x1) * ey - (by - y1) * ex);
+			x = (x1 + x3) / 2 - a * ey;
+			y = (y1 + y3) / 2 + a * ex;
+		} else {
+		'''
+
+		if D <= 10**(-9):
+			D = 0.01 # Just force it
+
+
 		p_0 = (((a_0 - c_0) * (a_0 + c_0) + (a_1 - c_1) * (a_1 + c_1)) / 2 * (b_1 - c_1) -  ((b_0 - c_0) * (b_0 + c_0) + (b_1 - c_1) * (b_1 + c_1)) / 2 * (a_1 - c_1)) / D
 		p_1 = (((b_0 - c_0) * (b_0 + c_0) + (b_1 - c_1) * (b_1 + c_1)) / 2 * (a_0 - c_0) -  ((a_0 - c_0) * (a_0 + c_0) + (a_1 - c_1) * (a_1 + c_1)) / 2 * (b_0 - c_0)) / D
 		print("p_0 == "+str(p_0))
@@ -63,6 +86,8 @@ class Delaunay:
 		print("distance_squared == "+str(distance_squared))
 		assert isinstance(p_0, float)
 		assert isinstance(p_1, float)
+		assert p_0 != math.nan
+		assert p_0 != math.inf
 		return ((p_0, p_1), distance_squared) # Return a tuple containing the circle center and the distance squared.
 	# Fast algorithm to check if point p is inside the circumcircle enscribing triangle tri. (This assumes that the self.circles array has been initialized.)
 	def inCircleFast(self, tri, p) -> bool:
@@ -124,9 +149,10 @@ class Delaunay:
 				# Just move to the next CCW edge in the opposite triangle.
 				cur_edge = (self.triangles[tri_op].index(tri) + 1) % 3
 				tri = tri_op # Jump to the next triangle.
-		
+		removed_shit = set()
 		# Remove the "bad" triangles
 		for t in bad_triangles:
+			removed_shit.add(t) # add the triangle to the removed shit set.
 			del self.triangles[t]
 			del self.circles[t]
 		
@@ -141,9 +167,12 @@ class Delaunay:
 			# Set opposite triangle of the edge as neigbhour of T
 			self.triangles[T] = [tri_op, None, None]
 
+			print("self.triangles == "+str(self.triangles))
+
 			# Try to set T as neighbour of the opposite triangle
 			if tri_op:
 				# Search the neighbour of the opposite triangle.
+				#print("tri_op in removed_shit: "+str(tri_op in removed_shit))
 				for i, neigh in enumerate(self.triangles[tri_op]):
 					if neigh:
 						if e1 in neigh and e0 in neigh:
@@ -181,8 +210,8 @@ class Delaunay:
 		# init regions per coordinate dictionary.
 		regions = {}
 		# Sort each region in a coherent order, and substitute each triangle by its index.
-		for i in range(4, len(self.coords)): # Skip over the first triangles which is the bounding box stuff.
-			
+		# for i in range(4, len(self.coords)): # Skip over the first triangles which is the bounding box stuff.
+		for i in range(4, len(self.coords)):
 			# The current vertex
 			v = useVertex[i][0][0]
 			r = []
