@@ -5,6 +5,7 @@ from delaunay import * # Import the Delaunay stuff
 import turtle
 import math
 from triangle_clipping import * # this is for clip_polygon(original_points, radius)
+from check_inside import *
 
 MOVE_SPEED = 2
 SCALE_FACTOR = 5
@@ -111,7 +112,25 @@ class Lloyd:
         # Now just update the delaunay and voronoi stuff.
         self.updateDelaunay()
         self.updateVoronoi()
-    
+
+
+    def get_polygon_index(self, point): # Get's the index in the current polygons, where the point is inside of .
+        # Get's the index of the polygon in self.polygons which contains inside the point called "point"
+        for i, poly in enumerate(self.regions):
+            polygon_points_indexes = self.regions[poly]
+            # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
+            points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
+            # Now check if the point is inside the polygon drawn out by connecting every point in the "points" list.
+            # def check_inside_poly(point, polygon):
+            res = check_inside_poly(point, points)
+            if res:
+                # Is inside so return the current index.
+                return i
+        # The point is not inside of any polygon
+        #assert False
+        return 0 # Just shut up.
+        return 
+
     def update_weighted(self, image_data): # Image data is the pixel data of the image.
         # See https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
 
@@ -119,10 +138,61 @@ class Lloyd:
         new_points = [] # This will be assigned to self.points later on.
         polygons = self.regions
         cells = polygons
+        r = self.radius
         # Get the current centroids and assign the points to them.
         #cur_centroids = [self.get_centroid(poly) for poly in polygons] # These are the current centroids.
-        cur_centroids = [self.get_centroid(self.regions[poly]) for poly in polygons] # These are the current centroids.
-        self.prev_centroids = cur_centroids
+
+
+        #cur_centroids = [self.get_centroid(self.regions[poly]) for poly in polygons] # These are the current centroids.
+
+        #self.prev_centroids = cur_centroids
+        
+        
+        # Before lerping, we need to calculate the weights of each thing.
+        '''
+        for i in range(len(image_data)):
+            for j in range(len(image_data[0])):
+                # Get the brightness
+                brightness = (pix[0]+pix[1]+pix[2])/3.0
+                w = 1 - (brightness/255)
+                centroid_index = self.get_index()
+        '''
+
+        centroids = [[0,0] for _ in range(len(polygons))] # Initialize to (0,0)
+        weights = [0.0 for _ in range(len(centroids))] # All of the weights
+        # Ok, so image_data is the points and the brightnesses.
+        tot_count = 0
+        complete_count = len(image_data)*len(image_data[0])
+        for i in range(len(image_data)):
+            print(str(tot_count/complete_count*100)+" percent done")
+            for j in range(len(image_data[0])):
+                pix = image_data[i][j]
+                point = ((i/(len(image_data)))*r*2-(r), j/(len(image_data[0]))*r*2-(r))
+                brightness = (pix[0]+pix[1]+pix[2])/3.0
+                weight = 1 - (brightness / 255)
+
+                cor_index = self.get_polygon_index(point)
+                # Now update the weight shit of the centroids using the correct index. Just follow this: https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
+                #centroids[cor_index][0] += i*weight
+                #centroids[cor_index][1] += j*weight
+
+                centroids[cor_index][0] += (point[0])*weight
+                centroids[cor_index][1] += (point[1])*weight
+                weights[cor_index] += weight # Add the weight to the weights
+
+                tot_count += 1 # Add one to the counter.
+        print("Calculated the weight shit..")
+        # Now divide the centroids by the weights
+        for i in range(len(centroids)):
+            if weights[i] > 0: # avoid division by zero.
+                centroids[i] = (centroids[i][0]/weights[i], centroids[i][1]/weights[i])
+            else:
+                centroids[i] = self.points[i] # Just copy.
+
+        centroids = [list(x) for x in centroids]
+
+        cur_centroids = centroids
+        self.prev_centroids = centroids
         # Lerp the points forward a bit.
         print("Length of cur_centroids: "+str(len(cur_centroids)))
         print("Length of the centroids: "+str(len(cur_centroids)))
@@ -347,11 +417,11 @@ def main() -> int:
     # First generate testdata:
     numSeeds = 100
     radius = 40
-    #seeds = radius * np.random.random((numSeeds, 2))
+    seeds = radius * np.random.random((numSeeds, 2))
     #seeds = [(10,0),(-10,0),(0,-10),(0,10),(10,10)]
     #seeds = [(x*5,x) for x in range(-5,5,1)]
     #seeds = [(-10,0), (10,0), (10,10)]
-    seeds = [(-10,0), (10,0), (0,10)]
+    #seeds = [(-10,0), (10,0), (0,10)]
     # First declare the Lloyd object.
     #lloyd = Lloyd(seeds)
     lloyd = Lloyd(seeds, center=(0,0), radius=50)
@@ -359,6 +429,7 @@ def main() -> int:
     while True:
         # First update, then render.
         lloyd.update()
+        #lloyd.update_weighted()
         turtle.clearscreen()
         lloyd.render()
         lloyd.render_delaunay() # tris = delaunay.exportTriangles()

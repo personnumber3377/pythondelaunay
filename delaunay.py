@@ -39,9 +39,9 @@ class Delaunay:
 
 		r^2 = (c_0 - p_0)^2 + (c_1 - p_1)^2
 		'''
-		print("Here is the triangle: "+str(triangle))
+		#print("Here is the triangle: "+str(triangle))
 		pts = np.asarray([self.coords[v] for v in triangle])
-		print(pts)
+		#print(pts)
 		assert len(pts) == 3 # Triangle should have three points.
 		a = pts[0]
 		b = pts[1]
@@ -54,7 +54,7 @@ class Delaunay:
 		c_1 = c[1]
 
 		D = (a_0 - c_0) * (b_1 - c_1) - (b_0 - c_0) * (a_1 - c_1)
-		print("Value of D: "+str(D))
+		#print("Value of D: "+str(D))
 		
 		# This bounds check is ripped straight from here: https://github.com/d3/d3-delaunay/blob/main/src/voronoi.js
 		'''
@@ -79,11 +79,11 @@ class Delaunay:
 
 		p_0 = (((a_0 - c_0) * (a_0 + c_0) + (a_1 - c_1) * (a_1 + c_1)) / 2 * (b_1 - c_1) -  ((b_0 - c_0) * (b_0 + c_0) + (b_1 - c_1) * (b_1 + c_1)) / 2 * (a_1 - c_1)) / D
 		p_1 = (((b_0 - c_0) * (b_0 + c_0) + (b_1 - c_1) * (b_1 + c_1)) / 2 * (a_0 - c_0) -  ((a_0 - c_0) * (a_0 + c_0) + (a_1 - c_1) * (a_1 + c_1)) / 2 * (b_0 - c_0)) / D
-		print("p_0 == "+str(p_0))
-		print("p_1 == "+str(p_1))
+		#print("p_0 == "+str(p_0))
+		#print("p_1 == "+str(p_1))
 
 		distance_squared = (c_0 - p_0)**2 + (c_1 - p_1)**2
-		print("distance_squared == "+str(distance_squared))
+		#print("distance_squared == "+str(distance_squared))
 		assert isinstance(p_0, float)
 		assert isinstance(p_1, float)
 		assert p_0 != math.nan
@@ -126,7 +126,10 @@ class Delaunay:
 		#	for edge in tri:
 		#		# if edge is not shared by any other triangles in badTriangles
 		#		
-
+		if len(bad_triangles) == 0: # fuck!
+			self.coords.pop(-1) # Revert the adding of the very last element
+			return
+		
 		tri = bad_triangles[0]
 		cur_edge = 0
 		while True:
@@ -167,7 +170,7 @@ class Delaunay:
 			# Set opposite triangle of the edge as neigbhour of T
 			self.triangles[T] = [tri_op, None, None]
 
-			print("self.triangles == "+str(self.triangles))
+			#print("self.triangles == "+str(self.triangles))
 
 			# Try to set T as neighbour of the opposite triangle
 			if tri_op:
@@ -213,6 +216,8 @@ class Delaunay:
 		# for i in range(4, len(self.coords)): # Skip over the first triangles which is the bounding box stuff.
 		for i in range(4, len(self.coords)):
 			# The current vertex
+			if i not in useVertex:
+				continue # This is just to shut up the warning.
 			v = useVertex[i][0][0]
 			r = []
 			for _ in range(len(useVertex[i])): # Go over each 
