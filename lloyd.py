@@ -12,6 +12,32 @@ SCALE_FACTOR = 5
 import time
 
 
+def render_points(t, check_points, color="black"):
+    t.color(color)
+    t.penup()
+    for p in check_points:
+        t.goto((p[0]*SCALE_FACTOR, p[1]*SCALE_FACTOR))
+        t.dot()
+    return
+
+
+
+def gen_points(min_x, max_x, min_y, max_y, step_size): # This generates a box of points
+    check_points = []
+    x = min_x
+    y = min_y
+    while y <= max_y:
+        x = min_x
+        while x <= max_x:
+            point = (x,y)
+            check_points.append(point)
+            x += step_size
+        y += step_size
+    return check_points
+
+
+
+
 def render_triangles(triangles: list, test_points: list) -> None: # This renders the triangles with turtle
     t = turtle.Turtle()
     t.speed(0)
@@ -128,12 +154,33 @@ class Lloyd:
                 return i
         # The point is not inside of any polygon
         #assert False
-        return 0 # Just shut up.
-        return 
+        #return 0 # Just shut up.
+        return "oof"
+
+    def debug_polygon_shit(self): # This should show us the points which do not get assigned to any polygon.
+        # First create a box of points.
+        # def gen_points(min_x, max_x, min_y, max_y, step_size):
+        points = gen_points(-self.radius, self.radius, -self.radius, self.radius, 0.5) # Box of points.
+        t = turtle.Turtle()
+        turtle.tracer(0,0)
+        turtle.speed(0)
+        render_points(t, points) # First show all of them 
+        # self.get_polygon_index(point)
+        # if that function returns "oof" , then we know that that said point is not assigned to any voronoi polygon.
+        unassigned_points = []
+        for p in points:
+            if self.get_polygon_index(p) == "oof":
+                unassigned_points.append(p)
+        render_points(t, unassigned_points, color="purple")
+        # Just render the other shit too.
+        #self.render()
+        turtle.update()
+        time.sleep(50)
+        return
 
     def update_weighted(self, image_data): # Image data is the pixel data of the image.
         # See https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
-
+        self.debug_polygon_shit()
         print("New cycle!!!")
         new_points = [] # This will be assigned to self.points later on.
         polygons = self.regions
@@ -163,6 +210,10 @@ class Lloyd:
         # Ok, so image_data is the points and the brightnesses.
         tot_count = 0
         complete_count = len(image_data)*len(image_data[0])
+
+        point_count = 6000 # Generate six thousand points.
+        
+        # Do not modify this shit here. it will break shit.
         for i in range(len(image_data)):
             #print(str(tot_count/complete_count*100)+" percent done")
             for j in range(len(image_data[0])):
@@ -181,6 +232,7 @@ class Lloyd:
                 weights[cor_index] += weight # Add the weight to the weights
 
                 tot_count += 1 # Add one to the counter.
+
         print("Calculated the weight shit..")
         # Now divide the centroids by the weights
         for i in range(len(centroids)):
@@ -199,7 +251,8 @@ class Lloyd:
         # Show the current centroids.
         #self.draw_points(points=cur_centroids) # Just draw the centroids.
         
-        for i in range(len(self.points)):
+        #for i in range(len(self.points)):
+        for i in range(len(cur_centroids)):
             p = self.points[i]
             centroid = cur_centroids[i]
             # Add a bit of the centroid vector to the point.
