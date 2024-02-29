@@ -111,6 +111,44 @@ class Lloyd:
         # Now just update the delaunay and voronoi stuff.
         self.updateDelaunay()
         self.updateVoronoi()
+    
+    def update_weighted(self, image_data): # Image data is the pixel data of the image.
+        # See https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
+
+        print("New cycle!!!")
+        new_points = [] # This will be assigned to self.points later on.
+        polygons = self.regions
+        cells = polygons
+        # Get the current centroids and assign the points to them.
+        #cur_centroids = [self.get_centroid(poly) for poly in polygons] # These are the current centroids.
+        cur_centroids = [self.get_centroid(self.regions[poly]) for poly in polygons] # These are the current centroids.
+        self.prev_centroids = cur_centroids
+        # Lerp the points forward a bit.
+        print("Length of cur_centroids: "+str(len(cur_centroids)))
+        print("Length of the centroids: "+str(len(cur_centroids)))
+        # Show the current centroids.
+        #self.draw_points(points=cur_centroids) # Just draw the centroids.
+        
+        for i in range(len(self.points)):
+            p = self.points[i]
+            centroid = cur_centroids[i]
+            # Add a bit of the centroid vector to the point.
+            p_to_centroid_vec = (-p[0]+centroid[0], -p[1]+centroid[1])
+            how_much_to_advance = (p_to_centroid_vec[0]*MOVE_SPEED, p_to_centroid_vec[1]*MOVE_SPEED)
+            new_points.append((p[0]+how_much_to_advance[0], p[1]+how_much_to_advance[1])) # Add the vector.
+            # Sanity check.
+            #assert math.sqrt((new_points[-1][0]**2)+(new_points[-1][1]**2)) <= self.radius
+        # Instead of an assert, let's put a thing which just forces the point to be inside the stuff.
+
+        # assign the moved points to self.points
+        self.points = new_points
+        self.check_points() # Bounds check.
+        # Sanity check.
+        #assert all(math.sqrt((p[0]**2)+(p[1]**2)) <= self.radius for p in self.points)
+        # Now just update the delaunay and voronoi stuff.
+        self.updateDelaunay()
+        self.updateVoronoi()
+
 
     def check_points(self):
         point_list = self.points
@@ -153,7 +191,10 @@ class Lloyd:
 
         # Draw the clipped shit.
         # def render_polygon(polygon, t, color="blue"):
-        render_polygon(scale_points(new_points), turtle.Turtle(), color="green")
+        t = turtle.Turtle()
+        t.speed(0)
+        turtle.tracer(0, 0)
+        render_polygon(scale_points(new_points), t, color="green")
         turtle.update()
         #time.sleep(0.05) # Sleep to show the green stuff
         # Now calculate rough centroid. Clip first
@@ -304,7 +345,7 @@ class Lloyd:
 
 def main() -> int:
     # First generate testdata:
-    numSeeds = 200
+    numSeeds = 100
     radius = 40
     #seeds = radius * np.random.random((numSeeds, 2))
     #seeds = [(10,0),(-10,0),(0,-10),(0,10),(10,10)]
@@ -321,7 +362,7 @@ def main() -> int:
         turtle.clearscreen()
         lloyd.render()
         lloyd.render_delaunay() # tris = delaunay.exportTriangles()
-        time.sleep(0.1)
+        #time.sleep(0.1)
     return 0
 
 if __name__=="__main__": # Runs tests.
