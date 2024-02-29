@@ -56,7 +56,7 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     # First generate testdata:
     numSeeds = 30
     radius = 40
-    seeds = radius * np.random.random((numSeeds, 2))
+    #seeds = radius * np.random.random((numSeeds, 2))
     #seeds = [(10,0),(-10,0),(0,-10),(0,10),(10,10)]
     #seeds = [(x*5,x) for x in range(-5,5,1)]
     #seeds = [(-10,0), (10,0), (10,10)]
@@ -66,6 +66,8 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     #seeds = [p[0] for p in pts]
     #print("seeds == "+str(seeds))
     #print("seeds == "+str(seeds))
+
+    seeds = [(0,0)]
 
 
     #lloyd = Lloyd(all_points, center=(0,0), radius=radius)
@@ -80,7 +82,8 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
         turtle.clearscreen()
         lloyd.render()
         lloyd.render_delaunay() # tris = delaunay.exportTriangles()
-        #time.sleep(0.1)
+        turtle.update()
+        time.sleep(4)
 
 
 

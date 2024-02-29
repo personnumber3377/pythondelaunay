@@ -164,7 +164,7 @@ class Lloyd:
         tot_count = 0
         complete_count = len(image_data)*len(image_data[0])
         for i in range(len(image_data)):
-            print(str(tot_count/complete_count*100)+" percent done")
+            #print(str(tot_count/complete_count*100)+" percent done")
             for j in range(len(image_data[0])):
                 pix = image_data[i][j]
                 point = ((i/(len(image_data)))*r*2-(r), j/(len(image_data[0]))*r*2-(r))
