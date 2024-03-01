@@ -10,7 +10,13 @@ import turtle
 import copy
 import time
 
-SCALE_FACTOR = 60
+SCALE_FACTOR = 5
+
+DEBUG = False
+
+def debug(string: str) -> None: # Debug print
+    if DEBUG:
+        print("[DEBUG] "+str(string))
 
 def render_points(t, check_points, color="black"):
     t.color(color)
@@ -29,16 +35,24 @@ def check_intersection_quick(p0, p1, y_coord):
     return True
 
 def handle_vertical(p0, p1, point):
+
+    debug("p0 == "+str(p0))
+    debug("p1 == "+str(p1))
+    debug("point == "+str(point))
+
+
     y_range = [p0[1], p1[1]] # This is the y range to check against.
     min_y_coord = point[1]
     y_range = [min(y_range), max(y_range)]
+    debug("y_range == "+str(y_range))
     assert y_range[0] <= y_range[1]
     y_coord = point[1]
     if y_coord >= y_range[0] and y_coord <= y_range[1]:
         #return True
-        #print("y_coord == "+str(y_coord))
-        #print("min_y_coord == "+str(min_y_coord))
-        return point[0] >= p0[0]
+        debug("y_coord == "+str(y_coord))
+        debug("min_y_coord == "+str(min_y_coord))
+        #return point[0] >= p0[0]
+        return point[0] <= p0[0]
     return False
 
 
@@ -72,6 +86,8 @@ def check_intersection_complex(p0, p1, point): # The point is used here to check
         res = handle_vertical(p0, p1, point)
         #print("res == "+str(res))
         #return res
+        #print("Handled vertical line.")
+        #print("res == "+str(res))
         return res
         #return False
     m = (y1 - y0)/(x1 - x0)
@@ -79,6 +95,9 @@ def check_intersection_complex(p0, p1, point): # The point is used here to check
         return handle_horizontal(p0, p1, point)
         #return False
     x_value = (m * x1 + y_coord - y1)/m
+    
+    #print("x_value == "+str(x_value))
+
     if x_value > min_x_coord: # Always just go to the right.
         return True
     else:
@@ -131,12 +150,26 @@ def check_inside_poly(point, polygon):
 
 def run_inside_test(): # A simple test which shows the points which are inside and which are outside of a certain polygon.
     #example_polygon = [(-1,-1), (-1,1), (1,1), (1,-1)] # A simple box.
-    example_polygon = [(-2,0), (2,0), (0,2)]
-    min_x = -3
-    max_x = 3
-    min_y = -3
-    max_y = 3
-    step_size = 0.1 # How far away are the evenly put points.
+    #example_polygon = [(-2,0), (2,0), (0,2)]
+
+    #example_polygon = [(-2, 0), (3,1), (0.3, 2), (-1, 1)]
+    # Counter clockwise square. Start from the top left.
+
+    #example_polygon = [(-1,1), (-1,-1), (1,-1), (1,1)]
+
+    example_polygon = [(-51.666666666666664, 0.0), (0.0, -38.75), (0.0, 0.0), (-22.142857142857142, 22.142857142857142)]
+    example_polygon = list(reversed(example_polygon))
+
+    radius = 50
+    
+    
+    min_x = -radius
+    max_x = radius
+    min_y = -radius
+    max_y = radius
+
+
+    step_size = 1.0 # How far away are the evenly put points.
     
     check_points = []
     x = min_x
@@ -152,6 +185,8 @@ def run_inside_test(): # A simple test which shows the points which are inside a
     # Now we have a grid of points in check_points.
     # Render all of them first
     #while True:
+
+    # check_points = [(-10, -10)] # This is a simple testcase
     t = turtle.Turtle()
     turtle.tracer(0,0)
     turtle.speed(0)
@@ -170,7 +205,7 @@ def run_inside_test(): # A simple test which shows the points which are inside a
             red_points.append(p)
     render_points(t, red_points, color="red")
     turtle.update()
-    time.sleep(3)
+    time.sleep(300)
     return
 
 

@@ -6,11 +6,22 @@ import turtle
 import math
 from triangle_clipping import * # this is for clip_polygon(original_points, radius)
 from check_inside import *
+import random
 
 MOVE_SPEED = 2
 SCALE_FACTOR = 5
 import time
 
+
+def gen_random_color(): # Generates a random color as a string: "#rrggbb" hex .
+    # col = "#"+''.join([hex(random.randrange(0,256))[2:] for _ in range(3)]) # This doesn't work, because hex(10) = "0xa" . We expect the hex shit to be two characters long after the "0x" prefix.
+    
+    # Thanks to https://stackoverflow.com/questions/12638408/decorating-hex-function-to-pad-zeros
+    # "{:02x}".format(7)
+    
+    col = "#"+''.join(["{:02x}".format(random.randrange(0,256)) for _ in range(3)])
+    assert len(col) == len("#b01e91")
+    return col
 
 def render_points(t, check_points, color="black"):
     t.color(color)
@@ -65,6 +76,7 @@ def render_triangles(triangles: list, test_points: list) -> None: # This renders
 def render_polygon(polygon, t, color="blue"):
     # t is the turtle
     # color is the... ya know... color
+    '''
     t.penup()
     t.color(color)
     t.goto(polygon[0])
@@ -73,6 +85,17 @@ def render_polygon(polygon, t, color="blue"):
         t.goto(pos)
     t.goto(polygon[0])
     t.penup()
+    '''
+
+    turtle.penup()
+    turtle.color(color)
+    turtle.goto(polygon[0])
+    turtle.pendown()
+    for pos in polygon[1:]:
+        turtle.goto(pos)
+    turtle.goto(polygon[0])
+    turtle.penup()
+
     return
 
 
@@ -140,38 +163,93 @@ class Lloyd:
         self.updateVoronoi()
 
 
+    def render_voronoi_debug(self, t):
+        turtle.tracer(0,0)
+        turtle.speed(0)
+        for i, poly in enumerate(self.regions):
+            #turtle.clearscreen()
+            polygon_points_indexes = self.regions[poly]
+            # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
+            points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
+            # render_polygon(scale_points(points), t, color="red")
+            print("points == "+str(points))
+            render_polygon(scale_points(points), turtle)
+            #t.update()
+            #turtle.clear()
+            turtle.update()
+            #turtle.clear()
+            input("Press any key to continue..-")
+            #turtle.clearscreen()
+            #turtle.clearscreen()
+            turtle.clear()
+        return
+
+
+
     def get_polygon_index(self, point): # Get's the index in the current polygons, where the point is inside of .
         # Get's the index of the polygon in self.polygons which contains inside the point called "point"
         for i, poly in enumerate(self.regions):
             polygon_points_indexes = self.regions[poly]
             # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
             points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
+            print("Here is the points inside get_polygon_index: "+str(points))
             # Now check if the point is inside the polygon drawn out by connecting every point in the "points" list.
             # def check_inside_poly(point, polygon):
             res = check_inside_poly(point, points)
             if res:
                 # Is inside so return the current index.
+                print("Returning actual: "+str(i))
                 return i
         # The point is not inside of any polygon
         #assert False
         #return 0 # Just shut up.
+        print("Returning oof")
         return "oof"
 
     def debug_polygon_shit(self): # This should show us the points which do not get assigned to any polygon.
         # First create a box of points.
         # def gen_points(min_x, max_x, min_y, max_y, step_size):
+
         points = gen_points(-self.radius, self.radius, -self.radius, self.radius, 0.5) # Box of points.
         t = turtle.Turtle()
         turtle.tracer(0,0)
         turtle.speed(0)
-        render_points(t, points) # First show all of them 
+
+        # First render the polygons.
+
+        self.render_voronoi_debug(t)
+        turtle.update()
+        input()
+        #render_points(t, points) # First show all of them 
         # self.get_polygon_index(point)
         # if that function returns "oof" , then we know that that said point is not assigned to any voronoi polygon.
         unassigned_points = []
+        cur_index = None
+        index_shit = [[] for _ in range(len(self.regions)+1)] # +1 for the unassigned area
+        #cur_polygon_shit = []
         for p in points:
-            if self.get_polygon_index(p) == "oof":
-                unassigned_points.append(p)
-        render_points(t, unassigned_points, color="purple")
+            # Check for new index
+            index = self.get_polygon_index(p)
+            if index == "oof":
+                index = len(index_shit)-1 # Just get the last index
+                # actually just skip this.
+                #continue
+            index_shit[index].append(p)
+
+            #if self.get_polygon_index(p) !=:
+            #    unassigned_points.append(p)
+        #assert len(index_shit[-1]) == 0
+        print("sum([len(x) for x in index_shit]) == "+str(sum([len(x) for x in index_shit])))
+        print("len(points) == "+str(len(points)))
+        assert sum([len(x) for x in index_shit]) == len(points)
+        print("length of the index_shit: "+str(len(index_shit)-1))
+        for indexes in index_shit:
+            # indexes is a list of points, all of which are inside the exact same polygon. First generate a random color and then show the points.
+            ran_color = gen_random_color()
+            render_points(t, indexes, color=ran_color)
+            turtle.update()
+            input()
+
         # Just render the other shit too.
         #self.render()
         turtle.update()
