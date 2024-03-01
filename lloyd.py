@@ -73,6 +73,40 @@ def render_triangles(triangles: list, test_points: list) -> None: # This renders
 
 
 
+def shift_list(lst, start_index):
+    # Shifts a list.
+    point_index_bullshit = lst
+    
+    # Now cut the list at start_index.
+    point_index_bullshit_copy = copy.deepcopy(point_index_bullshit)
+    search_shit = point_index_bullshit_copy[start_index:]
+
+    other_shit = point_index_bullshit_copy[:start_index]
+
+    search_shit = search_shit + other_shit
+
+    assert search_shit[start_index] == point_index_bullshit[0]
+
+    return search_shit
+
+def get_weight_color(weight, weights): # This returns a shade of blue. The darker it is, the more weight.
+    
+    #col = "#"+''.join(["{:02x}".format(random.randrange(0,256)) for _ in range(3)])
+    #assert len(col) == len("#b01e91")
+    # rgb
+    print("fuck")
+    base = "#0000"
+    max_weight = max(weights)
+    if max_weight == 0:
+        max_weight = 1
+    blue = "{:02x}".format(round(weight/max_weight*255)) # Just the proportional thing.
+    print("blue == "+str(blue))
+    assert len(blue) == 2
+    
+    return base+blue
+
+
+
 def render_polygon(polygon, t, color="blue"):
     # t is the turtle
     # color is the... ya know... color
@@ -173,37 +207,66 @@ class Lloyd:
             points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
             # render_polygon(scale_points(points), t, color="red")
             print("points == "+str(points))
-            render_polygon(scale_points(points), turtle)
+            render_polygon(scale_points(points), turtle, color=get_weight_color(self.weights[i], self.weights)) # The color signifies the weights.
+
+            print("self.weights == "+str(self.weights))
             #t.update()
             #turtle.clear()
             turtle.update()
             #turtle.clear()
-            input("Press any key to continue..-")
+            #input("Press any key to continue..-")
             #turtle.clearscreen()
             #turtle.clearscreen()
-            turtle.clear()
+            #turtle.clear()
+        time.sleep(2)
+        turtle.clear()
         return
 
 
 
-    def get_polygon_index(self, point): # Get's the index in the current polygons, where the point is inside of .
+    def get_polygon_index(self, point, start_index=0): # Get's the index in the current polygons, where the point is inside of .
         # Get's the index of the polygon in self.polygons which contains inside the point called "point"
-        for i, poly in enumerate(self.regions):
-            polygon_points_indexes = self.regions[poly]
+
+        point_index_bullshit = [self.regions[poly] for poly in self.regions]
+        #print("point_index_bullshit[0] == "+str(point_index_bullshit[0]))
+        # Now cut the list at start_index.
+        point_index_bullshit_copy = copy.deepcopy(point_index_bullshit)
+        search_shit = point_index_bullshit_copy[start_index:]
+
+        other_shit = point_index_bullshit_copy[:start_index]
+
+        search_shit = search_shit + other_shit
+        #print("search_shit[start_index] == "+str(search_shit[start_index]))
+        assert len(search_shit) == len(point_index_bullshit) # Sanity.
+        assert search_shit[0] == point_index_bullshit[start_index]
+
+        on_first_try = False
+        for i, polygon_points_indexes in enumerate(search_shit):
+            #polygon_points_indexes = self.regions[poly]
             # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
             points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
-            print("Here is the points inside get_polygon_index: "+str(points))
+
+            #print("points == "+str(points))
+
+            #print("Here is the points inside get_polygon_index: "+str(points))
             # Now check if the point is inside the polygon drawn out by connecting every point in the "points" list.
             # def check_inside_poly(point, polygon):
             res = check_inside_poly(point, points)
             if res:
                 # Is inside so return the current index.
-                print("Returning actual: "+str(i))
-                return i
+                #print("Returning actual: "+str(i))
+
+                #return i
+                # Instead of returning i, we need to return the index into the original index, so do some modulo magic.
+                return (start_index + i) % len(search_shit), on_first_try
+            on_first_try = False
         # The point is not inside of any polygon
         #assert False
         #return 0 # Just shut up.
-        print("Returning oof")
+        # Now just return the last index.
+        return start_index, False
+
+        #print("Returning oof")
         return "oof"
 
     def debug_polygon_shit(self): # This should show us the points which do not get assigned to any polygon.
@@ -227,11 +290,13 @@ class Lloyd:
         cur_index = None
         index_shit = [[] for _ in range(len(self.regions)+1)] # +1 for the unassigned area
         #cur_polygon_shit = []
+        last_found_index = 0
         for p in points:
             # Check for new index
-            index = self.get_polygon_index(p)
-            if index == "oof":
-                index = len(index_shit)-1 # Just get the last index
+            index, _ = self.get_polygon_index(p, start_index=last_found_index)
+            last_found_index = index
+            #if index == "oof":
+            #    index = len(index_shit)-1 # Just get the last index
                 # actually just skip this.
                 #continue
             index_shit[index].append(p)
@@ -258,9 +323,10 @@ class Lloyd:
 
     def update_weighted(self, image_data): # Image data is the pixel data of the image.
         # See https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
-        self.debug_polygon_shit()
+        #self.debug_polygon_shit()
         print("New cycle!!!")
         new_points = [] # This will be assigned to self.points later on.
+        print("self.regions == "+str(self.regions))
         polygons = self.regions
         cells = polygons
         r = self.radius
@@ -285,6 +351,7 @@ class Lloyd:
 
         centroids = [[0,0] for _ in range(len(polygons))] # Initialize to (0,0)
         weights = [0.0 for _ in range(len(centroids))] # All of the weights
+        self.weights = weights
         # Ok, so image_data is the points and the brightnesses.
         tot_count = 0
         complete_count = len(image_data)*len(image_data[0])
@@ -292,18 +359,39 @@ class Lloyd:
         point_count = 6000 # Generate six thousand points.
         
         # Do not modify this shit here. it will break shit.
+        cur_start_index = 0
+        first_try_count = 1
+        tot_count = 1
+        #print("initial centroids: "+str(centroids))
         for i in range(len(image_data)):
             #print(str(tot_count/complete_count*100)+" percent done")
+            #print("First try count: "+str(first_try_count/(tot_count)*100))
             for j in range(len(image_data[0])):
                 pix = image_data[i][j]
+                print("pix == "+str(pix))
+                print("pix[0] == "+str(pix[0]))
+                print("pix[1] == "+str(pix[1]))
+                print("pix[2] == "+str(pix[2]))
+                pix = [float(x) for x in pix]
                 point = ((i/(len(image_data)))*r*2-(r), j/(len(image_data[0]))*r*2-(r))
                 brightness = (pix[0]+pix[1]+pix[2])/3.0
+                print("pix[0]+pix[1]+pix[2] == "+str(pix[0]+pix[1]+pix[2]))
+                print("Brightness: "+str(brightness))
                 weight = 1 - (brightness / 255)
+                
+                cor_index, first_try = self.get_polygon_index(point, start_index=cur_start_index)
+                #print("cor_index == "+str(cor_index))
+                #print("cur_start_index == "+str(cur_start_index))
+                first_try_count += int(first_try)
+                tot_count += 1
+                cur_start_index = cor_index
 
-                cor_index = self.get_polygon_index(point)
+                #print("cor_index == "+str(cor_index))
                 # Now update the weight shit of the centroids using the correct index. Just follow this: https://editor.p5js.org/codingtrain/sketches/Z_YV25_4G
                 #centroids[cor_index][0] += i*weight
                 #centroids[cor_index][1] += j*weight
+                #print("centroids[cor_index] == "+str(centroids[cor_index]))
+
 
                 centroids[cor_index][0] += (point[0])*weight
                 centroids[cor_index][1] += (point[1])*weight

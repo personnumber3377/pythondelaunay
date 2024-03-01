@@ -63,11 +63,29 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     # Now finally do the stuff
 
     # First generate testdata:
-    numSeeds = 5
-    radius = 40
+    numSeeds = 50
+    radius = 10
     #seeds = radius * np.random.random((numSeeds, 2))
+    # subtract half of radius from each point to get the shit
+    seeds = []
+    for _ in range(numSeeds):
+        orig_point = 2*radius * np.array([random.random(), random.random()])
+        # Now subtract one radius.
+        orig_point[0] = orig_point[0] - radius
+        orig_point[1] = orig_point[1] - radius
+        #print("x == "+str(x))
+        print("orig_point == "+str(orig_point))
+        x = orig_point[0]
+        y = orig_point[1]
+        assert x >= -1*radius and x <= radius
+        assert y >= -1*radius and y <= radius
+        seeds.append(orig_point)
     # Crate a group of points, (centered at 0,0)
+
+
     #seeds = radius * (np.random.random((numSeeds, 2))- np.array([-1/2*radius, -1/2*radius]))
+
+
     #seeds = radius * np.random.random((numSeeds, 2))
     #seeds = [(10,0),(-10,0),(0,-10),(0,10),(10,10)]
     #seeds = [(x*5,x) for x in range(-5,5,1)]
@@ -78,7 +96,7 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     #seeds = [p[0] for p in pts]
     #print("seeds == "+str(seeds))
     #print("seeds == "+str(seeds))
-    seeds = [(-10,0), (10,0), (0,10)]
+    #seeds = [(-10,0), (10,0), (0,10)]
 
     #seeds = [(0,0)]
     print("seeds: "+str(seeds))
@@ -89,6 +107,7 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     # all_points
     #lloyd = Lloyd(all_points, center=(0,0), radius=radius)
     # We basically wan't to move the points until the points are are at the centroids of the voronoi cells.
+    t = turtle.Turtle()
     while True:
         # First update, then render.
         #lloyd.update()
@@ -96,7 +115,9 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
         #lloyd.update_weighted()
         turtle.clearscreen()
         lloyd.render()
-        lloyd.render_delaunay() # tris = delaunay.exportTriangles()
+        #lloyd.debug_polygon_shit()
+        lloyd.render_voronoi_debug(t)
+        #lloyd.render_delaunay() # tris = delaunay.exportTriangles()
         turtle.update()
         #time.sleep(4)
         time.sleep(0.2)

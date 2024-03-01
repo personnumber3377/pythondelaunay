@@ -216,8 +216,8 @@ class Delaunay:
 		# for i in range(4, len(self.coords)): # Skip over the first triangles which is the bounding box stuff.
 		for i in range(4, len(self.coords)):
 			# The current vertex
-			if i not in useVertex or len(useVertex[i]) == 0:
-				continue # This is just to shut up the warning.
+			#if i not in useVertex or len(useVertex[i]) == 0:
+			#	continue # This is just to shut up the warning.
 			v = useVertex[i][0][0]
 			r = []
 			for _ in range(len(useVertex[i])): # Go over each 
