@@ -132,8 +132,13 @@ def scale_points(point_list: list) -> list: # This scales the points.
 def check_inside_poly(point, polygon):
     # Go over each side.
     y_coord = point[1] # I am just going to use the line y = something to check, because I am lazy
-    copy_polygon = copy.deepcopy(polygon)
-    copy_polygon.append(copy.deepcopy(copy_polygon[0])) # This simplifies the code a bit.
+    #copy_polygon = copy.deepcopy(polygon) #  Bad for performance.
+    copy_polygon = polygon
+
+
+    #copy_polygon.append(copy.deepcopy(copy_polygon[0])) # This simplifies the code a bit.
+    copy_polygon.append(copy_polygon[0])
+
     count = 0
     for i in range(len(copy_polygon) - 1):
         prev_point = copy_polygon[i]

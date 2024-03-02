@@ -9,9 +9,9 @@ from check_inside import *
 import random
 
 MOVE_SPEED = 2
-SCALE_FACTOR = 5
+SCALE_FACTOR = 50
 import time
-
+from util import *
 
 def gen_random_color(): # Generates a random color as a string: "#rrggbb" hex .
     # col = "#"+''.join([hex(random.randrange(0,256))[2:] for _ in range(3)]) # This doesn't work, because hex(10) = "0xa" . We expect the hex shit to be two characters long after the "0x" prefix.
@@ -23,12 +23,13 @@ def gen_random_color(): # Generates a random color as a string: "#rrggbb" hex .
     assert len(col) == len("#b01e91")
     return col
 
-def render_points(t, check_points, color="black"):
-    t.color(color)
-    t.penup()
+#def render_points(t, check_points, color="black"):
+def render_points(check_points, color="black"):
+    turtle.color(color)
+    turtle.penup()
     for p in check_points:
-        t.goto((p[0]*SCALE_FACTOR, p[1]*SCALE_FACTOR))
-        t.dot()
+        turtle.goto((p[0]*SCALE_FACTOR, p[1]*SCALE_FACTOR))
+        turtle.dot()
     return
 
 
@@ -53,6 +54,8 @@ def render_triangles(triangles: list, test_points: list) -> None: # This renders
     t = turtle.Turtle()
     t.speed(0)
     t.penup()
+    turtle.speed(0)
+    turtle.tracer(0,0)
     print("Called render_triangles")
     for tri in triangles:
         print("tri: "+str(tri))
@@ -147,17 +150,51 @@ def scale_point(point): # This scales just one point
 
 class Lloyd:
     def __init__(self, points: list, center=(0,0), radius=1000):
-        self.points = points
+
+        self.points = list(set(copy.deepcopy(points))) # Get rid of duplicate points. If I leave them in, then shit goes haywire.
+        assert not check_multiple(self.points) # Sanity.
         self.center = center
         self.radius = radius
         self.delaunay_diagram = Delaunay(center=center, radius=radius)
         global EXCEPTION
-        for p in self.points:
+        for i,p in enumerate(self.points):
             
             self.delaunay_diagram.addPoint(p)
+
+            # This is used for debugging.
+
+            #def render_delaunay(self):
+            # tris = delaunay.exportTriangles()
+
+
+            '''
+
+            tris = self.delaunay_diagram.exportTriangles(want_bounding_triangle=False)
+
+            
+            render_triangles(tris, self.points)
+            if i != len(self.points)-1:
+                next_point = self.points[i+1]
+
+                render_points([next_point], color="purple")
+            turtle.update()
+            #print("i == "+str(i))
+            #print("len(self.points) == "+str(len(self.points)))
+
+            self.draw_bounding_triangle(turtle)
+            turtle.update()
+            #time.sleep(2)
+            time.sleep(0.04)
+            turtle.clear()
             if EXCEPTION:
                 assert False
                 return
+
+
+            '''
+
+            
+
 
         self.circumcenters, self.regions = self.delaunay_diagram.exportVoronoi()
     def updateDelaunay(self) -> None: # This assumes that self.points has been reassigned.
@@ -224,7 +261,7 @@ class Lloyd:
             #turtle.clearscreen()
             #turtle.clearscreen()
             #turtle.clear()
-        #time.sleep(2)
+        time.sleep(2)
         turtle.clear()
         return
 

@@ -198,9 +198,12 @@ class Delaunay:
 			self.triangles[T][1] = new_triangles[(i+1) % N] # Next
 			self.triangles[T][2] = new_triangles[(i-1) % N] # previous.
 
-	def exportTriangles(self): # Returns the triangles not including the bounding box stuff.
-		return [(a-4, b-4, c-4) for (a,b,c) in self.triangles if a > 3 and b > 3 and c > 3]
-	
+	def exportTriangles(self, want_bounding_triangle=False): # Returns the triangles not including the bounding box stuff.
+		if not want_bounding_triangle:
+
+			return [(a-4, b-4, c-4) for (a,b,c) in self.triangles if a > 3 and b > 3 and c > 3]
+		else:
+			return self.triangles
 	def exportVoronoi(self): # This returns the vertexes and the edges of the corresponding voronoi shit.
 		useVertex = {i: [] for i in range(len(self.coords))} # This is the dictionary with the triangle index as a key and the value as the corresponding edges of that triangle. Construct this such that the key is always the last edge in the list.
 		vor_coords = []
