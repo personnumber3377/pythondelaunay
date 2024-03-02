@@ -61,3 +61,30 @@ def check_multiple(lst): # This checks if there are duplicate elements in a list
 	return len(set_shit) != len(lst) # If the lengths are the same then there are NOT any duplicates.
 
 
+def render_triangles(triangles: list, test_points: list, color="red") -> None: # This renders the triangles with turtle
+    t = turtle.Turtle()
+    t.speed(0)
+    t.penup()
+    turtle.color(color)
+    turtle.speed(0)
+    turtle.tracer(0,0)
+    print("Called render_triangles")
+    for tri in triangles:
+        print("tri: "+str(tri))
+        # OK, so tri is a list of the indexes to the points list, therefore get points.
+        p1 = test_points[tri[0]]
+        p2 = test_points[tri[1]]
+        p3 = test_points[tri[2]]
+
+        triangle_points = scale_points([p1,p2,p3])
+        turtle.goto(triangle_points[0])
+        turtle.pendown()
+        turtle.goto(triangle_points[1])
+        turtle.goto(triangle_points[2])
+        turtle.goto(triangle_points[0])
+        turtle.penup()
+        turtle.update()
+    return
+
+
+

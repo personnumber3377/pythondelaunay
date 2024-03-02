@@ -1,7 +1,10 @@
 
 import numpy as np
 import math
+import time
 EXCEPTION = False
+from util import *
+
 
 
 class Delaunay:
@@ -106,7 +109,7 @@ class Delaunay:
         return np.linalg.det(m) <= 0
 		'''
 		m1 = np.asarray([self.coords[v] - p for v in tri])
-		m2 = np.sum(np.square(m1), axis=1).respahe((3,1)) # Reshape this stuff
+		m2 = np.sum(np.square(m1), axis=1).reshape((3,1)) # Reshape this stuff
 		# Ok, so m1 is the two leftmost columns and m2 is the square difference shit.
 		m = np.hstack((m1,m2))
 		return np.linalg.det(m) <= 0 # if the determinant is negative or zero, then the point p is inside the circumcircle for tri.
@@ -117,11 +120,17 @@ class Delaunay:
 		self.coords.append(p) # Add point to the point list.
 
 		bad_triangles = [] # badTriangles := empty set
-
+		found = False
 		for tri in self.triangles: # // first find all the triangles that are no longer valid due to the insertion
-			if self.inCircleFast(tri, p): # If the triangle is in the triangle, then that triangle is no longer valid.
+			#if self.inCircleFast(tri, p): # If the triangle is in the triangle, then that triangle is no longer valid.
+			if self.inCircleFast(tri, p):
+				print("We found the bad triangle!!!!")
+				found = True
 				bad_triangles.append(tri)
 		
+		assert found # There should atleast be one bad triangle.
+
+
 		polygon = [] # These are the points of the new polygon.
 
 		#for tri in bad_triangles: #  // find the boundary of the polygonal hole
@@ -130,10 +139,15 @@ class Delaunay:
 		#		
 		if len(bad_triangles) == 0: # fuck!
 			self.coords.pop(-1) # Revert the adding of the very last element
+			assert False # Fuuuccccckkkk
 			return
 		
 		tri = bad_triangles[0]
 		cur_edge = 0
+
+		#  This variable is to see if we find a polygon or not.
+		found_polygon = False
+
 		while True:
 			# Check if edge of triangle T is on the polygonal boundary.
 			
@@ -149,23 +163,52 @@ class Delaunay:
 
 				# Check if boundary polygon is closed as a loop. If yes, then break
 				if polygon[0][0] == polygon[-1][1]:
+					found_polygon = True
 					break
 			else: # tri_op is in bad_triangles.
 				# Just move to the next CCW edge in the opposite triangle.
 				cur_edge = (self.triangles[tri_op].index(tri) + 1) % 3
 				tri = tri_op # Jump to the next triangle.
-		#removed_shit = set()
+
+		# polygon
+
+		render_triangles(bad_triangles, self.coords, color="blue")
+		render_points([p], color="purple")
+		print("p == "+str(p))
+		#print("p.select(0) == "+str(p.select(0)))
+		#if p == np.array([-0.06666666666666665, -0.33333333333333337]): # Check for the buggy point.
+
+		#time.sleep(100000)
+		removed_shit = set()
 		# Remove the "bad" triangles
 		for t in bad_triangles:
-			#removed_shit.add(t) # add the triangle to the removed shit set.
+			if t == tri_op:
+				assert False, "Fuck!"
+			removed_shit.add(t) # add the triangle to the removed shit set.
 			del self.triangles[t]
 			del self.circles[t]
+
+		print("Value of found_polygon: "+str(found_polygon))
+		self.render_polygon(polygon)
+
+		if (p == np.array([-0.06666666666666665, -0.33333333333333337])).all():
+			
+
+			print("Here is the current value of polygon: "+str(polygon))
+			print("Here is the removed_shit: "+str(removed_shit))
+
+			# Now render the polygon shit.
+			self.render_polygon(polygon)
+			#time.sleep(300) # sleep
+		
 		
 		# Retriangle the hole left by bad triangles.
 		new_triangles = []
 		for (e0, e1, tri_op) in polygon: # e0 is the edge and then the tri_op is the thing.
 			# Create a new triangle using point p and edge extremes.
 			T = (idx, e0, e1)
+
+			#assert not tri_op in bad_triangles
 
 			# Store the circumcenter and circumradius of the triangle.
 			self.circles[T] = self.circumcenter(T)
@@ -178,11 +221,20 @@ class Delaunay:
 			if tri_op:
 				# Search the neighbour of the opposite triangle.
 				#print("tri_op in removed_shit: "+str(tri_op in removed_shit))
+
+				'''
 				if tri_op not in self.triangles:
 					global EXCEPTION
 					EXCEPTION = True # Set the exception marker.
 					assert False
 					return
+				'''
+
+
+				#print("tri_op == "+str(tri_op))
+
+				#render_triangles(tri_op, self.coords, color="blue")
+
 				for i, neigh in enumerate(self.triangles[tri_op]):
 					if neigh:
 						if e1 in neigh and e0 in neigh:
@@ -238,4 +290,40 @@ class Delaunay:
 			regions[i-4] = r # Store the region into the set.
 		return vor_coords, regions # Regions is the dict where the key is the index of the center point and the value is just the list of the associated 
 
+	def render_polygon(self, polygon): # This renders the polygon.
+		turtle.color("green")
+		# First convert the polygon data structure to a list of points and then iterate over them.
+		pts = []
+		for (edge0, edge1, tri_op) in polygon:
+			# Ok so the start edge is edge0 and the end edge is edge1
+			p0 = self.coords[edge0]
+			p1 = self.coords[edge1]
+			p0,p1 = scale_points([p0,p1])
+			turtle.penup()
+			turtle.goto(p0)
+			turtle.dot()
+			turtle.pendown()
+			turtle.goto(p1)
+			turtle.dot()
+			turtle.penup()
+		turtle.update()
+		#time.sleep(100)
+		return
 
+
+
+
+'''
+Just a quick debug thing...
+
+poopoofuck!!!!
+p == [-0.06666667 -0.33333333]
+Here is the current value of polygon: [(6, 12, (15, 12, 6)), (12, 14, (14, 12, 11)), (14, 16, (16, 14, 5)), (16, 0, (16, 10, 0)), (0, 17, (17, 0, 1)), (17, 13, (17, 1, 13)), (13, 6, (13, 8, 6))]
+Here is the removed_shit: {(17, 6, 12), (17, 13, 6), (17, 12, 14), (17, 16, 0), (17, 14, 16)}
+
+
+    for i, neigh in enumerate(self.triangles[tri_op]):
+KeyError: (13, 8, 6)
+
+
+'''

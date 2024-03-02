@@ -48,7 +48,7 @@ def gen_points(min_x, max_x, min_y, max_y, step_size): # This generates a box of
     return check_points
 
 
-
+'''
 
 def render_triangles(triangles: list, test_points: list) -> None: # This renders the triangles with turtle
     t = turtle.Turtle()
@@ -73,6 +73,7 @@ def render_triangles(triangles: list, test_points: list) -> None: # This renders
         turtle.penup()
         turtle.update()
     return
+'''
 
 
 
@@ -150,15 +151,21 @@ def scale_point(point): # This scales just one point
 
 class Lloyd:
     def __init__(self, points: list, center=(0,0), radius=1000):
-
-        self.points = list(set(copy.deepcopy(points))) # Get rid of duplicate points. If I leave them in, then shit goes haywire.
+        if check_multiple(points):
+            print("There are duplicates")
+            self.points = list(set(copy.deepcopy(points))) # Get rid of duplicate points. If I leave them in, then shit goes haywire.
+        else:
+            self.points = points
+        #print("self.points == "+str(self.points))
         assert not check_multiple(self.points) # Sanity.
         self.center = center
         self.radius = radius
         self.delaunay_diagram = Delaunay(center=center, radius=radius)
         global EXCEPTION
         for i,p in enumerate(self.points):
-            
+            print("Adding this point: "+str(p))
+            #if p == (-0.06666666666666665, -0.33333333333333337): # Crashing point, so stop here.
+            #    time.sleep(1000)
             self.delaunay_diagram.addPoint(p)
 
             # This is used for debugging.
@@ -167,16 +174,17 @@ class Lloyd:
             # tris = delaunay.exportTriangles()
 
 
-            '''
-
+            
+            
             tris = self.delaunay_diagram.exportTriangles(want_bounding_triangle=False)
 
             
             render_triangles(tris, self.points)
             if i != len(self.points)-1:
-                next_point = self.points[i+1]
+                next_point = self.points[i]
 
                 render_points([next_point], color="purple")
+            print("Here is the next point: "+str(next_point))
             turtle.update()
             #print("i == "+str(i))
             #print("len(self.points) == "+str(len(self.points)))
@@ -184,14 +192,16 @@ class Lloyd:
             self.draw_bounding_triangle(turtle)
             turtle.update()
             #time.sleep(2)
-            time.sleep(0.04)
+            time.sleep(0.5)
             turtle.clear()
             if EXCEPTION:
                 assert False
                 return
 
+            
 
-            '''
+
+            
 
             
 
@@ -625,7 +635,7 @@ class Lloyd:
         self.draw_bounding(t)
         self.draw_bounding_triangle(t)
         self.draw_points(t=t)
-        self.draw_points(t=t, points=self.prev_centroids)
+        self.draw_points(t=t, points=self.prev_centroids, color="red")
         turtle.update()
         #time.sleep(0.01)
     def draw_bounding(self, t):
@@ -656,7 +666,7 @@ class Lloyd:
         t.penup()
         return
     
-    def draw_points(self, t=None, points=None): # This draws all of the points.
+    def draw_points(self, t=None, points=None, color="black"): # This draws all of the points.
         
         if t == None:
             t = turtle.Turtle()
@@ -664,7 +674,7 @@ class Lloyd:
         t.penup()
         if points == None:
             points = self.points
-        t.color("black")
+        t.color(color)
         for p in points:
             # Just place a dot everywhere where the points are.
             t.goto(scale_point(p))
