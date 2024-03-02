@@ -32,7 +32,9 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
     #    for j in range(len(img[0])):
     
 
-    BRIGHTNESS_TRESHOLD = 100 # Maximum brightness to consider a point.
+    RAND_NOISE = 0.05
+
+    BRIGHTNESS_TRESHOLD = 150 # Maximum brightness to consider a point.
 
     while point_count:
         i = random.randrange(len(img))
@@ -52,22 +54,30 @@ def main(): # Loads an image called image.png and then shows the voronoi stippli
         brightness = (temp)/3.0
         assert isinstance(brightness, float)
         assert brightness >= 0 and brightness <= 255
-        if brightness < BRIGHTNESS_TRESHOLD: # We want DARK spots, not light spots. Therefore less than.
+        #if brightness < BRIGHTNESS_TRESHOLD: # We want DARK spots, not light spots. Therefore less than.
+        if brightness < random.randrange(BRIGHTNESS_TRESHOLD):
             actual_point = (((i/(len(img)))*radius*2-(radius), j/(len(img[0]))*radius*2-(radius)), brightness) # How far along the x coordinates we are times the radius giving us the correct place.
             # Sanity checks.
             # The point should not be outside of the bounding box.
 
             x = actual_point[0][0]
             y = actual_point[0][1]
+
+            # Add a bit of random noise to the points.
             #print("x == "+str(x))
             #print("y == "+str(y))
             assert x >= -1*radius and x <= radius and y >= -1*radius and y <= radius # Sanity
             #print("Point passed!!!")
             #cur_line.append(actual_point)
-            all_points.append(actual_point[0])
+
+            #actual_point = [actual_point[0][0]+random.random()*RAND_NOISE, actual_point[0][1]+random.random()*RAND_NOISE]
+            actual_point = [actual_point[0][0], actual_point[0][1]]
+            #all_points.append(actual_point[0])
+            all_points.append(tuple(actual_point))
         #pts.append(cur_line)
         point_count -= 1
     
+    render_points(all_points)
 
     #radius += 3
 

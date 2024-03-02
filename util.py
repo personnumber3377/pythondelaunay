@@ -1,7 +1,7 @@
 
 import turtle
 
-SCALE_FACTOR = 50
+SCALE_FACTOR = 150
 
 
 def scale_points(point_list: list) -> list: # This scales the points.

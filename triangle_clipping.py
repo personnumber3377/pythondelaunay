@@ -112,7 +112,9 @@ def sutherland_hodgman(points, radius):
     #for clipEdge in [(radius,None),(-radius,None),(None, radius), (None, -radius)]: # This is just a list of the bounding box lines.
     #for clipEdge in [(None,radius)]:
     for clipEdge in [(radius,None),(-radius,None),(None, radius), (None, -radius)]:
-        inputList = copy.deepcopy(out)
+        #inputList = copy.deepcopy(out) # This is bad for performance.
+        inputList = out
+
         
         out = []
         for i in range(len(inputList)):

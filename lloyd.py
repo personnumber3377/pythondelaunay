@@ -199,6 +199,7 @@ class Lloyd:
         self.circumcenters, self.regions = self.delaunay_diagram.exportVoronoi()
     def updateDelaunay(self) -> None: # This assumes that self.points has been reassigned.
         self.delaunay_diagram = Delaunay(center=self.center, radius=self.radius)
+        self.points = list(set(self.points)) # Get rid of duplicate points.
         for p in self.points:
             self.delaunay_diagram.addPoint(p)
     def updateVoronoi(self) -> None: # This assumes that updateDelaunay has been called
