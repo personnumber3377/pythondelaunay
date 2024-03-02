@@ -1,6 +1,8 @@
 
 import numpy as np
 import math
+EXCEPTION = False
+
 
 class Delaunay:
 	def __init__(self, center=(0,0), radius=1000): # Constructor
@@ -152,10 +154,10 @@ class Delaunay:
 				# Just move to the next CCW edge in the opposite triangle.
 				cur_edge = (self.triangles[tri_op].index(tri) + 1) % 3
 				tri = tri_op # Jump to the next triangle.
-		removed_shit = set()
+		#removed_shit = set()
 		# Remove the "bad" triangles
 		for t in bad_triangles:
-			removed_shit.add(t) # add the triangle to the removed shit set.
+			#removed_shit.add(t) # add the triangle to the removed shit set.
 			del self.triangles[t]
 			del self.circles[t]
 		
@@ -176,6 +178,11 @@ class Delaunay:
 			if tri_op:
 				# Search the neighbour of the opposite triangle.
 				#print("tri_op in removed_shit: "+str(tri_op in removed_shit))
+				if tri_op not in self.triangles:
+					global EXCEPTION
+					EXCEPTION = True # Set the exception marker.
+					assert False
+					return
 				for i, neigh in enumerate(self.triangles[tri_op]):
 					if neigh:
 						if e1 in neigh and e0 in neigh:

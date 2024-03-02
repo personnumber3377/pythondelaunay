@@ -151,8 +151,14 @@ class Lloyd:
         self.center = center
         self.radius = radius
         self.delaunay_diagram = Delaunay(center=center, radius=radius)
+        global EXCEPTION
         for p in self.points:
+            
             self.delaunay_diagram.addPoint(p)
+            if EXCEPTION:
+                assert False
+                return
+
         self.circumcenters, self.regions = self.delaunay_diagram.exportVoronoi()
     def updateDelaunay(self) -> None: # This assumes that self.points has been reassigned.
         self.delaunay_diagram = Delaunay(center=self.center, radius=self.radius)
@@ -206,10 +212,10 @@ class Lloyd:
             # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
             points = [self.circumcenters[polygon_points_indexes[j]] for j in range(len(polygon_points_indexes))]
             # render_polygon(scale_points(points), t, color="red")
-            print("points == "+str(points))
+            #print("points == "+str(points))
             render_polygon(scale_points(points), turtle, color=get_weight_color(self.weights[i], self.weights)) # The color signifies the weights.
 
-            print("self.weights == "+str(self.weights))
+            #print("self.weights == "+str(self.weights))
             #t.update()
             #turtle.clear()
             turtle.update()
@@ -218,7 +224,7 @@ class Lloyd:
             #turtle.clearscreen()
             #turtle.clearscreen()
             #turtle.clear()
-        time.sleep(2)
+        #time.sleep(2)
         turtle.clear()
         return
 
@@ -230,7 +236,11 @@ class Lloyd:
         point_index_bullshit = [self.regions[poly] for poly in self.regions]
         #print("point_index_bullshit[0] == "+str(point_index_bullshit[0]))
         # Now cut the list at start_index.
-        point_index_bullshit_copy = copy.deepcopy(point_index_bullshit)
+
+        #point_index_bullshit_copy = copy.deepcopy(point_index_bullshit)
+
+        point_index_bullshit_copy = point_index_bullshit
+
         search_shit = point_index_bullshit_copy[start_index:]
 
         other_shit = point_index_bullshit_copy[:start_index]
@@ -240,7 +250,7 @@ class Lloyd:
         assert len(search_shit) == len(point_index_bullshit) # Sanity.
         assert search_shit[0] == point_index_bullshit[start_index]
 
-        on_first_try = False
+        on_first_try = True
         for i, polygon_points_indexes in enumerate(search_shit):
             #polygon_points_indexes = self.regions[poly]
             # pts = [self.circumcenters[point_indexes[i]] for i in range(len(point_indexes))]
@@ -365,25 +375,25 @@ class Lloyd:
         #print("initial centroids: "+str(centroids))
         for i in range(len(image_data)):
             #print(str(tot_count/complete_count*100)+" percent done")
-            #print("First try count: "+str(first_try_count/(tot_count)*100))
+            print("First try count: "+str(first_try_count/(tot_count)*100))
             for j in range(len(image_data[0])):
                 pix = image_data[i][j]
-                print("pix == "+str(pix))
-                print("pix[0] == "+str(pix[0]))
-                print("pix[1] == "+str(pix[1]))
-                print("pix[2] == "+str(pix[2]))
+                #print("pix == "+str(pix))
+                #print("pix[0] == "+str(pix[0]))
+                #print("pix[1] == "+str(pix[1]))
+                #print("pix[2] == "+str(pix[2]))
                 pix = [float(x) for x in pix]
                 point = ((i/(len(image_data)))*r*2-(r), j/(len(image_data[0]))*r*2-(r))
                 brightness = (pix[0]+pix[1]+pix[2])/3.0
-                print("pix[0]+pix[1]+pix[2] == "+str(pix[0]+pix[1]+pix[2]))
-                print("Brightness: "+str(brightness))
+                #print("pix[0]+pix[1]+pix[2] == "+str(pix[0]+pix[1]+pix[2]))
+                #print("Brightness: "+str(brightness))
                 weight = 1 - (brightness / 255)
                 
                 cor_index, first_try = self.get_polygon_index(point, start_index=cur_start_index)
                 #print("cor_index == "+str(cor_index))
                 #print("cur_start_index == "+str(cur_start_index))
                 first_try_count += int(first_try)
-                tot_count += 1
+                #tot_count += 1
                 cur_start_index = cor_index
 
                 #print("cor_index == "+str(cor_index))
@@ -476,7 +486,8 @@ class Lloyd:
         # self.circumcenters, self.regions
 
         # Now at this point check for clipping using triangle_clipping.py: 
-        new_points = clip_polygon(copy.deepcopy(pts), self.radius)
+        #new_points = clip_polygon(copy.deepcopy(pts), self.radius)
+        new_points = clip_polygon(pts, self.radius)
 
         # Draw the clipped shit.
         # def render_polygon(polygon, t, color="blue"):
